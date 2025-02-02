@@ -9,7 +9,7 @@
 import SpriteKit
 
 enum BugSettings {
-  static let playerSpeed: CGFloat = 280.0
+  static let bugDistance: CGFloat = 16
 }
 
 class Bug: SKSpriteNode {
@@ -31,17 +31,32 @@ class Bug: SKSpriteNode {
     physicsBody?.linearDamping = 0.5
     physicsBody?.friction = 0
     physicsBody?.allowsRotation = false
+    physicsBody?.categoryBitMask = PhysicsCategory.Bug
     
     createAnimations(character: "bug")
   }
   
-  func move(target: CGPoint) {
-    guard let physicsBody = physicsBody else { return }
-    let newVelocity =
-    (target - position).normalized() * PlayerSettings.playerSpeed
-    physicsBody.velocity = CGVector(point: newVelocity)
+  func move() {
+    // 1
+    let randomX = CGFloat(Int.random(min: -1, max: 1))
+    let randomY = CGFloat(Int.random(min: -1, max: 1))
+    let vector = CGVector(dx: randomX * BugSettings.bugDistance,
+                          dy: randomY * BugSettings.bugDistance)
+    // 2
+    let moveBy = SKAction.move(by: vector, duration: 1)
+    let moveAgain = SKAction.run(move)
     
-    checkDirection()
+    // 1
+    let direction = animationDirection(for: vector)
+    // 2
+    if direction == .left {
+      xScale = abs(xScale)
+    } else if direction == .right {
+      xScale = -abs(xScale)
+    }
+    // 3
+    run(animations[direction.rawValue], withKey: "animation")
+    run(SKAction.sequence([moveBy, moveAgain]))
   }
   
   func checkDirection() {
@@ -58,6 +73,18 @@ class Bug: SKSpriteNode {
     }
     // 3
     run(animations[direction.rawValue], withKey: "animation")
+  }
+  
+  func die() {
+    // 1
+    removeAllActions()
+    texture = SKTexture(pixelImageNamed: "bug_lt1")
+    yScale = -1
+    // 2
+    physicsBody = nil
+    // 3
+    run(SKAction.sequence([SKAction.fadeOut(withDuration: 3),
+                           SKAction.removeFromParent()]))
   }
   
 }
