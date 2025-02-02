@@ -1,18 +1,18 @@
 //
-//  Player.swift
+//  Bug.swift
 //  PestControl
 //
-//  Created by Robert Fasciano on 2/1/25.
+//  Created by Robert Fasciano on 2/2/25.
 //  Copyright © 2025 Ray Wenderlich. All rights reserved.
 //
 
 import SpriteKit
 
-enum PlayerSettings {
+enum BugSettings {
   static let playerSpeed: CGFloat = 280.0
 }
 
-class Player: SKSpriteNode {
+class Bug: SKSpriteNode {
   var animations: [SKAction] = []
 
   required init?(coder aDecoder: NSCoder) {
@@ -20,19 +20,19 @@ class Player: SKSpriteNode {
   }
   
   init() {
-    let texture = SKTexture(pixelImageNamed: "player_ft1")
+    let texture = SKTexture(pixelImageNamed: "bug_ft1")
     super.init(texture: texture, color: .white,
                size: texture.size())
-    name = "Player"
-    zPosition = 50
+    name = "Bug"
+    zPosition = 40
     
     physicsBody = SKPhysicsBody(circleOfRadius: size.width/2)
-    physicsBody?.restitution = 1.0
+    physicsBody?.restitution = 0.5
     physicsBody?.linearDamping = 0.5
     physicsBody?.friction = 0
     physicsBody?.allowsRotation = false
     
-    createAnimations(character: "player")
+    createAnimations(character: "bug")
   }
   
   func move(target: CGPoint) {
@@ -62,4 +62,4 @@ class Player: SKSpriteNode {
   
 }
 
-extension Player : Animatable {}
+extension Bug : Animatable {}

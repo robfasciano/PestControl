@@ -10,6 +10,8 @@
 		1EBA241E2D4E7008005CBC00 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBA241D2D4E7008005CBC00 /* Player.swift */; };
 		1EBA24202D4E853D005CBC00 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBA241F2D4E853D005CBC00 /* Types.swift */; };
 		1EBA24222D4E858C005CBC00 /* Animatable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBA24212D4E858C005CBC00 /* Animatable.swift */; };
+		1EBA24242D4EE305005CBC00 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBA24232D4EE305005CBC00 /* Extensions.swift */; };
+		1EBA24262D4FAD89005CBC00 /* Bug.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBA24252D4FAD89005CBC00 /* Bug.swift */; };
 		824441731D3C5E8F005ECB76 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824441721D3C5E8F005ECB76 /* AppDelegate.swift */; };
 		824441751D3C5E8F005ECB76 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 824441741D3C5E8F005ECB76 /* GameScene.sks */; };
 		824441791D3C5E8F005ECB76 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 824441781D3C5E8F005ECB76 /* GameScene.swift */; };
@@ -36,6 +38,8 @@
 		1EBA241D2D4E7008005CBC00 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		1EBA241F2D4E853D005CBC00 /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		1EBA24212D4E858C005CBC00 /* Animatable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Animatable.swift; sourceTree = "<group>"; };
+		1EBA24232D4EE305005CBC00 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		1EBA24252D4FAD89005CBC00 /* Bug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bug.swift; sourceTree = "<group>"; };
 		8244416F1D3C5E8F005ECB76 /* PestControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PestControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		824441721D3C5E8F005ECB76 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		824441741D3C5E8F005ECB76 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -75,6 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				1EBA241D2D4E7008005CBC00 /* Player.swift */,
+				1EBA24252D4FAD89005CBC00 /* Bug.swift */,
 				1EBA24212D4E858C005CBC00 /* Animatable.swift */,
 			);
 			path = Characters;
@@ -102,9 +107,10 @@
 			isa = PBXGroup;
 			children = (
 				824441721D3C5E8F005ECB76 /* AppDelegate.swift */,
-				1EBA241F2D4E853D005CBC00 /* Types.swift */,
 				8244417A1D3C5E8F005ECB76 /* GameViewController.swift */,
 				824441781D3C5E8F005ECB76 /* GameScene.swift */,
+				1EBA241F2D4E853D005CBC00 /* Types.swift */,
+				1EBA24232D4EE305005CBC00 /* Extensions.swift */,
 				824441741D3C5E8F005ECB76 /* GameScene.sks */,
 				1EBA241C2D4E6FDF005CBC00 /* Characters */,
 				825EF27E1F0B16A60091577D /* TileSets.sks */,
@@ -228,12 +234,14 @@
 				82CCE3BC1F0B0A39009B67F9 /* SKTEffects.swift in Sources */,
 				1EBA241E2D4E7008005CBC00 /* Player.swift in Sources */,
 				82CCE3B81F0B0A39009B67F9 /* SKAction+SpecialEffects.swift in Sources */,
+				1EBA24242D4EE305005CBC00 /* Extensions.swift in Sources */,
 				82CCE3B51F0B0A39009B67F9 /* CGVector+Extensions.swift in Sources */,
 				82CCE3B71F0B0A39009B67F9 /* SKAction+Extensions.swift in Sources */,
 				82CCE3B91F0B0A39009B67F9 /* SKColor+Extensions.swift in Sources */,
 				8244417B1D3C5E8F005ECB76 /* GameViewController.swift in Sources */,
 				82CCE3B61F0B0A39009B67F9 /* Int+Extensions.swift in Sources */,
 				82CCE3BA1F0B0A39009B67F9 /* SKNode+Extensions.swift in Sources */,
+				1EBA24262D4FAD89005CBC00 /* Bug.swift in Sources */,
 				1EBA24222D4E858C005CBC00 /* Animatable.swift in Sources */,
 				82CCE3BB1F0B0A39009B67F9 /* SKTAudio.swift in Sources */,
 				82CCE3B31F0B0A39009B67F9 /* CGFloat+Extensions.swift in Sources */,
