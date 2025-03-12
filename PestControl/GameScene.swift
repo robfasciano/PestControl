@@ -37,38 +37,139 @@ class GameScene: SKScene {
   
   var player = Player()
   var bugsNode = SKNode()
+  var hud = HUD()
+  
+  var currentLevel: Int = 1
   var firebugCount: Int = 0
+  var bugCount: Int = 0
+ var timeLimit: Int = 10
+  var elapsedTime: Int = 0
+  var startTime: Int?
+  var gameState: GameState = .initial {
+    didSet {
+      hud.updateGameState(from: oldValue, to: gameState)
+    }
+  }
 
   required init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
     background =
     (childNode(withName: "background") as! SKTileMapNode)
     obstaclesTileMap = childNode(withName: "obstacles") as? SKTileMapNode
+    if let timeLimit =
+        userData?.object(forKey: "timeLimit") as? Int {
+      self.timeLimit = timeLimit
+    }
+    
+    // 1
+    let savedGameState = aDecoder.decodeInteger(
+      forKey: "Scene.gameState")
+    if let gameState = GameState(rawValue: savedGameState),
+       gameState == .pause {
+      self.gameState = gameState
+      firebugCount = aDecoder.decodeInteger(
+        forKey: "Scene.firebugCount")
+      elapsedTime = aDecoder.decodeInteger(
+        forKey: "Scene.elapsedTime")
+      currentLevel = aDecoder.decodeInteger(
+        forKey: "Scene.currentLevel")
+      // 2
+      player = childNode(withName: "Player") as! Player
+      hud = camera!.childNode(withName: "HUD") as! HUD
+      bugsNode = childNode(withName: "Bugs")!
+      bugsprayTileMap = childNode(withName: "Bugspray")
+      as? SKTileMapNode
+    }
+    
+    addObservers()
   }
   
   override func didMove(to view: SKView) {
-    addChild(player)
-    setupCamera()
-    setupWorldPhysics()
-    createBugs()
-    setupObstaclePhysics()
-    if firebugCount > 0 {
-      createBugspray(quantity: firebugCount + 10)
+    if gameState == .initial {
+      addChild(player)
+      setupWorldPhysics()
+      createBugs()
+      setupObstaclePhysics()
+      if firebugCount > 0 {
+        createBugspray(quantity: firebugCount + 10)
+      }
+      setupHUD()
+      gameState = .start
     }
+    setupCamera()
   }
   
   override func touchesBegan(
     _ touches: Set<UITouch>,
     with event: UIEvent?) {
       guard let touch = touches.first else { return }
-      player.move(target: touch.location(in: self))
+      switch gameState {
+        // 1
+      case .start:
+        gameState = .play
+        isPaused = false
+        startTime = nil
+        elapsedTime = 0
+        // 2
+      case .reload:
+        // 1
+        if let touchedNode =
+            atPoint(touch.location(in: self)) as? SKLabelNode {
+          // 2
+          if touchedNode.name == HUDMessages.yes {
+            isPaused = false
+            startTime = nil
+            gameState = .play
+            // 3
+          } else if touchedNode.name == HUDMessages.no {
+            transitionToScene(level: 1)
+      }
+      }
+      case .play:
+        player.move(target: touch.location(in: self))
+      case .win:
+        transitionToScene(level: currentLevel + 1)
+      case .lose:
+        transitionToScene(level: 1)
+      default:
+        break
+      }
     }
-  
+    
   override func update(_ currentTime: TimeInterval) {
+    if gameState != .play {
+      isPaused = true
+      return
+    }
   if !player.hasBugspray {
       updateBugspray()
     }
     advanceBreakableTile(locatedAt: player.position)
+    updateHUD(currentTime: currentTime)
+    checkEndGame()
+  }
+  
+  
+  func checkEndGame() {
+    if bugsNode.children.count == 0 {
+      player.physicsBody?.linearDamping = 1
+      gameState = .win
+    } else if timeLimit - elapsedTime <= 0 {
+      player.physicsBody?.linearDamping = 1
+      gameState = .lose
+    }
+  }
+  
+  func transitionToScene(level: Int) {
+    // 1
+    guard let newScene = SKScene(fileNamed: "Level\(level)")
+            as? GameScene else {
+      fatalError("Level: \(level) not found")
+    }
+    // 2
+    newScene.currentLevel = level
+    view?.presentScene(newScene,
+                       transition: SKTransition.flipVertical(withDuration: 0.5))
   }
   
   func setupCamera() {
@@ -102,6 +203,26 @@ class GameScene: SKScene {
     physicsWorld.contactDelegate = self
   }
   
+  func setupHUD() {
+    camera?.addChild(hud)
+    hud.addTimer(time: timeLimit)
+    hud.addBugCount(numBugs: bugCount)
+    print(bugCount)
+  }
+  
+  func updateHUD(currentTime: TimeInterval) {
+    // 1
+    if let startTime = startTime {
+      // 2
+      elapsedTime = Int(currentTime) - startTime
+  } else {
+    // 3
+      startTime = Int(currentTime) - elapsedTime
+    }
+    // 4
+    hud.updateTimer(time: timeLimit - elapsedTime)
+  }
+  
   func updateBugspray() {
     guard let bugsprayTileMap = bugsprayTileMap else { return }
     let (column, row) = tileCoordinates(in: bugsprayTileMap,
@@ -123,6 +244,7 @@ class GameScene: SKScene {
   func createBugs() {
     guard let bugsMap = childNode(withName: "bugs")
             as? SKTileMapNode else { return }
+    
     // 1
     for row in 0..<bugsMap.numberOfRows {
       for column in 0..<bugsMap.numberOfColumns {
@@ -131,6 +253,7 @@ class GameScene: SKScene {
                               at: (column, row))
         else { continue }
         // 3
+        bugCount += 1
         let bug: Bug
         if tile.userData?.object(forKey: "firebug") != nil {
           bug = Firebug()
@@ -141,9 +264,11 @@ class GameScene: SKScene {
         bug.position = bugsMap.centerOfTile(atColumn: column,
                                             row: row)
         bugsNode.addChild(bug)
-        bug.move()
+        bug.moveBug()
       }
     }
+    print("bugCount: \(bugCount)")
+
     // 4
     bugsNode.name = "Bugs"
     addChild(bugsNode)
@@ -208,41 +333,6 @@ class GameScene: SKScene {
     addChild(bugsprayTileMap!)
   }
   
-  //collision detection
-  func didBegin(_ contact: SKPhysicsContact) {
-    let other = contact.bodyA.categoryBitMask
-    == PhysicsCategory.Player ?
-    contact.bodyB : contact.bodyA
-    switch other.categoryBitMask {
-    case PhysicsCategory.Bug:
-      if let bug = other.node as? Bug {
-        remove(bug: bug)
-        background.addChild(bug)
-        bug.die()
-      }
-    case PhysicsCategory.Firebug:
-      if player.hasBugspray {
-        if let firebug = other.node as? Firebug {
-          remove(bug: firebug)
-          player.hasBugspray = false
-        }
-      }
-    case PhysicsCategory.Breakable:
-      if let obstacleNode = other.node {
-        // 1
-        advanceBreakableTile(locatedAt: obstacleNode.position)
-        // 2
-        obstacleNode.removeFromParent()
-      }
-    default:
-      break
-    }
-    if let physicsBody = player.physicsBody {
-      if physicsBody.velocity.length() > 0 {
-        player.checkDirection()
-      }
-    }
-  }
   
   func tileGroupForName(tileSet: SKTileSet, name: String)
   -> SKTileGroup? {
@@ -279,10 +369,176 @@ class GameScene: SKScene {
     return (column, row)
   }
   
+  func addObservers() {
+    let notificationCenter = NotificationCenter.default
+    notificationCenter
+      .addObserver(forName: .UIApplicationDidBecomeActive,
+                   object: nil, queue: nil) { [weak self] _ in
+        self?.applicationDidBecomeActive()
+      }
+    notificationCenter
+      .addObserver(forName: .UIApplicationWillResignActive,
+                   object: nil, queue: nil) { [weak self] _ in
+        self?.applicationWillResignActive()
+      }
+    notificationCenter
+      .addObserver(forName: .UIApplicationDidEnterBackground,
+                   object: nil, queue: nil) { [weak self] _ in
+        self?.applicationDidEnterBackground()
+      }
+  }
+  
+
+  
 }
 
+// MARK: - SKPhysicsContactDelegate
 extension GameScene : SKPhysicsContactDelegate {
+  //collision detection
+  func didBegin(_ contact: SKPhysicsContact) {
+    let other = contact.bodyA.categoryBitMask
+    == PhysicsCategory.Player ?
+    contact.bodyB : contact.bodyA
+    switch other.categoryBitMask {
+    case PhysicsCategory.Bug:
+      if let bug = other.node as? Bug {
+        remove(bug: bug)
+        background.addChild(bug)
+        bug.die()
+      }
+    case PhysicsCategory.Firebug:
+      if player.hasBugspray {
+        if let firebug = other.node as? Firebug {
+          remove(bug: firebug)
+          player.hasBugspray = false
+        }
+      }
+    case PhysicsCategory.Breakable:
+      if let obstacleNode = other.node {
+        // 1
+        advanceBreakableTile(locatedAt: obstacleNode.position)
+        // 2
+        obstacleNode.removeFromParent()
+      }
+    default:
+      break
+    }
+    if let physicsBody = player.physicsBody {
+      if physicsBody.velocity.length() > 0 {
+        player.checkDirection()
+      }
+    }
+  }
+  
   func remove(bug: Bug) {
     bug.removeFromParent()
+    bugCount -= 1
+    hud.updateBugCount(numBugs: bugCount)
+  }
+  
+}
+
+// MARK: - Notifications
+extension GameScene {
+  //called when app is woken up
+  func applicationDidBecomeActive() {
+    print("* applicationDidBecomeActive")
+    if gameState == .pause {
+      gameState = .reload
+    }
+  }
+  
+  //called when app about to get moved to background
+  func applicationWillResignActive() {
+    print("* applicationWillResignActive")
+    if gameState != .lose {
+      gameState = .pause
+    }
+  }
+  
+  //called when app moved to background
+  func applicationDidEnterBackground() {
+    print("* applicationDidEnterBackground")
+    if gameState != .lose {
+      saveGame()
+    }
+  }
+
+}
+
+// MARK: - Saving Games
+extension GameScene {
+  
+  override func encode(with aCoder: NSCoder) {
+    aCoder.encode(firebugCount,
+                  forKey: "Scene.firebugCount")
+    aCoder.encode(elapsedTime,
+                  forKey: "Scene.elapsedTime")
+    aCoder.encode(gameState.rawValue,
+                  forKey: "Scene.gameState")
+    aCoder.encode(currentLevel,
+                  forKey: "Scene.currentLevel")
+    super.encode(with: aCoder)
+  }
+  
+  class func loadGame() -> SKScene? {
+    print("* loading game")
+    var scene: SKScene?
+    // 1
+    let fileManager = FileManager.default
+    guard let directory =
+            fileManager.urls(for: .libraryDirectory,
+                             in: .userDomainMask).first
+    else { return nil }
+    // 2
+    let url = directory.appendingPathComponent(
+      "SavedGames/saved-game")
+    // 3
+    if FileManager.default.fileExists(atPath: url.path) {
+      scene = NSKeyedUnarchiver.unarchiveObject(
+        withFile: url.path) as? GameScene
+      _ = try? fileManager.removeItem(at: url)
+    }
+    return scene
+  }
+  
+  func saveGame() {
+    // 1
+    let fileManager = FileManager.default
+    guard let directory =
+            fileManager.urls(for: .libraryDirectory,
+                             in: .userDomainMask).first
+    else { return }
+    // 2
+    let saveURL = directory.appendingPathComponent("SavedGames")
+    // 3
+    do {
+      try fileManager.createDirectory(atPath: saveURL.path,
+                                      withIntermediateDirectories: true,
+                                      attributes: nil)
+    } catch let error as NSError {
+      fatalError(
+        "Failed to create directory: \(error.debugDescription)")
+    }
+    // 4
+    let fileURL = saveURL.appendingPathComponent("saved-game")
+    print("* Saving: \(fileURL.path)")
+    
+    // 5
+//5 original
+    NSKeyedArchiver.archiveRootObject (self, toFile: fileURL.path)
+//5 alternate (original seemed to fail to maintain sprite motion at restart during some builds)
+//    do {
+//      let data = try NSKeyedArchiver.archivedData(withRootObject: self, requiringSecureCoding: false)
+//      try data.write(to: fileURL)
+//  } catch let error as NSError {
+//      print("Couldn't write file: \(error.debugDescription)")
+//  }
+    
+    
   }
 }
+
+
+
+

@@ -14,9 +14,11 @@ enum BugSettings {
 
 class Bug: SKSpriteNode {
   var animations: [SKAction] = []
-
+  
   required init?(coder aDecoder: NSCoder) {
-    fatalError("Use init()")
+    super.init(coder: aDecoder)
+    animations = aDecoder.decodeObject(forKey: "Bug.animations")
+    as! [SKAction]
   }
   
   init() {
@@ -36,7 +38,9 @@ class Bug: SKSpriteNode {
     createAnimations(character: "bug")
   }
   
-  func move() {
+  //the change on page 410 did not help the bugs to keep moving
+  //I think I ned to restore all the move actions on a reboot
+  func moveBug() {
     // 1
     let randomX = CGFloat(Int.random(min: -1, max: 1))
     let randomY = CGFloat(Int.random(min: -1, max: 1))
@@ -44,7 +48,7 @@ class Bug: SKSpriteNode {
                           dy: randomY * BugSettings.bugDistance)
     // 2
     let moveBy = SKAction.move(by: vector, duration: 1)
-    let moveAgain = SKAction.run(move)
+    let moveAgain = SKAction.run(moveBug)
     
     // 1
     let direction = animationDirection(for: vector)
@@ -85,6 +89,11 @@ class Bug: SKSpriteNode {
     // 3
     run(SKAction.sequence([SKAction.fadeOut(withDuration: 3),
                            SKAction.removeFromParent()]))
+  }
+  
+  override func encode(with aCoder: NSCoder) {
+    aCoder.encode(animations, forKey: "Bug.animations")
+    super.encode(with: aCoder)
   }
   
 }
